@@ -1,0 +1,19 @@
+{
+  "total_rows": 30000,
+  "top_score": 0.960175,
+  "median_score": 0.529405,
+  "action_distribution": {
+    "monitor": 17630,
+    "update_facts_and_refresh": 5044,
+    "optimize_title_and_meta": 3887,
+    "refresh_and_optimize_content": 3422,
+    "refresh_and_expand": 17
+  },
+  "reason_code_distribution": {
+    "general_monitor": 17630,
+    "striking_distance_opportunity": 5044,
+    "low_ctr_visible_decay": 3887,
+    "page_one_decay_risk": 3422,
+    "stale_high_visibility": 17
+  }
+}
