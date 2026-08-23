@@ -1,0 +1,17 @@
+{
+  "lane": "Content Refresh & Priority Ranking",
+  "dataset": "FlyRank Anonymized Search Portfolio (30k rows, 32 clients)",
+  "unranked_base_rate": 0.5420666666666667,
+  "baseline_rule_precision_at_50": 0.536,
+  "random_forest_precision_at_50": 0.64,
+  "logistic_regression_precision_at_50": 0.72,
+  "rf_lift_vs_base_rate_pp": 14.0,
+  "top50_queue_traffic_share_pct": 7.543917307004573,
+  "top50_queue_decline_rate": 0.5960624575695859,
+  "archetype_counts": {
+    "P4: Evergreen / Standard Monitor": 19052,
+    "P3: CTR Metadata Optimization": 7054,
+    "P1: Striking-Distance Refresh": 3872,
+    "P5: Thin / Prune Audit": 22
+  }
+}
