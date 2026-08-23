@@ -103,6 +103,35 @@ How can content teams systematically prioritize which aging web pages to refresh
 
 ---
 
+---
+
 ## 9. Acknowledgments & data credit
 
 Built on the **FlyRank ML Internship dataset** ([https://flyrank.ai](https://flyrank.ai)).
+
+---
+
+## 10. ML-12 — Demo Outline & Shareable Cuts
+
+### A. 5-Minute Technical Demo Outline
+- **0:00–1:00 (Problem & Economics):** Content traffic decay and the high cost of blind refreshes ($150–$300/asset).
+- **1:00–2:30 (Data & Validation Integrity):** Why naive random splits fail (domain memorization) and our honest client-holdout split (`GroupShuffleSplit` across 32 clients).
+- **2:30–3:45 (Results & Model Lift):** Random Forest achieves 64.0% Precision@50 on unseen clients (+14.0 pp lift over base rate).
+- **3:45–5:00 (Action Playbook & Live Paper):** 5 operational content archetypes (P1–P5), reason codes, and the live deployed research paper at https://abhinavt1325.github.io/Flyrank-Internship-Capstone/.
+
+### B. Social Post Cut (LinkedIn / Twitter)
+> **Headline:** Most content refresh strategies fail because they refresh the wrong pages.
+>
+> In our latest research on 30,000 enterprise search URLs across 32 client domains, we investigated how machine learning can predict search traffic decay before revenue loss occurs.
+>
+> By evaluating strictly on unseen client domains (`GroupShuffleSplit`), our regularized Random Forest model achieved **64.0% Mean Precision@50** in prioritizing decaying content—a **+14.0 percentage point lift** over base rate.
+>
+> We translated these predictions into an operational triage engine with 5 content archetypes, reason codes, and human-in-the-loop safeguards.
+>
+> 📊 **Read the full interactive research paper:** https://abhinavt1325.github.io/Flyrank-Internship-Capstone/  
+> 💻 **Code & reproducible notebooks:** https://github.com/abhinavt1325/Flyrank-Internship-Capstone  
+> *(Built on the FlyRank ML Internship dataset — https://flyrank.ai)*
+
+### C. 3-Sentence Employer-Facing Summary
+> *"I engineered a machine learning content prioritization engine on 30,000 real-world enterprise search URLs across 32 client domains to solve organic traffic decay. Using strict client-holdout validation (`GroupShuffleSplit`), the model achieved 64.0% Precision@50 (+14.0 pp lift over base rate) in identifying high-leverage refresh opportunities. I translated these findings into an actionable decision-support triage queue with 5 operational archetypes and published the complete methodology as a deployed research paper on GitHub Pages."*
+
