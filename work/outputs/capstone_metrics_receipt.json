@@ -1,0 +1,11 @@
+{
+  "lane": "Content Refresh & Priority Ranking",
+  "total_urls": 30000,
+  "clients_count": 32,
+  "base_rate": 0.5420666666666667,
+  "baseline_rule_p50": 0.536,
+  "random_forest_p50": 0.64,
+  "logistic_regression_p50": 0.72,
+  "rf_lift_pp": 14.000000000000002,
+  "deployed_paper_url": "https://abhinavt1325.github.io/Flyrank-Internship-Capstone/"
+}
