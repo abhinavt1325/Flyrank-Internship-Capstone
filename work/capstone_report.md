@@ -72,7 +72,7 @@ How can content teams systematically prioritize which aging web pages to refresh
 | Random Forest | Grouped (Honest) | **64.00%** | **0.607** | **+14.00 pp** |
 | Logistic Regression | Grouped (Honest) | **72.00%** | **0.633** | **+22.00 pp** |
 
-- **Model Comparison:** In this specific experiment, Logistic Regression achieved the highest generalization ranking performance (72.00% Mean Precision@50, 0.633 ROC-AUC, +22.00 pp lift). The regularized linear model with standard scaling showed less sensitivity to domain-specific feature variance across unseen client partitions than tree partitioning on this dataset (this is an empirical finding for this specific dataset and feature set, not a universal theoretical claim). Random Forest (64.00%, +14.00 pp lift) captured non-linear interactions utilized to segment multi-tier editorial action archetypes.
+- **Model Comparison:** In this specific experiment, Logistic Regression achieved the strongest held-out ranking performance (72.00% Mean Precision@50, 0.633 ROC-AUC, +22.00 pp lift). The regularized linear model with standard scaling showed less sensitivity to domain-specific feature variance across unseen client partitions than tree partitioning on this dataset (this is an empirical finding for this specific dataset and feature set, not a universal theoretical claim). Random Forest (64.00%, +14.00 pp lift) captured non-linear interactions utilized to segment multi-tier editorial action archetypes.
 - **Error Analysis:** Top error mode is False Positives (~30–35%), which primarily consist of high-impression, stale evergreen reference pages where query intent has not changed. This indicates why the output must serve as human decision-support rather than autonomous automated rewriting.
 
 ---
@@ -141,5 +141,5 @@ I turned the predictions into a 5-archetype editorial triage engine and publishe
 (Built on the FlyRank ML Internship dataset: https://flyrank.ai)
 
 ### C. 3-Sentence Employer-Facing Summary
-I engineered a machine learning prioritization engine on 30,000 enterprise search URLs across 32 client domains to identify decaying organic content before revenue loss occurs. Evaluated strictly on unseen client domains using `GroupShuffleSplit`, the model achieved 72.0% Mean Precision@50 (+22.0 pp lift over base rate). I translated the output into an automated 5-archetype editorial action queue and deployed the complete research paper on GitHub Pages.
+I engineered a machine learning prioritization engine on 30,000 enterprise search URLs across 32 client domains to identify decaying organic content before revenue loss occurs. Evaluated strictly on unseen client domains using `GroupShuffleSplit`, the model achieved 72.0% Mean Precision@50 (+22.0 pp lift over base rate). I translated the output into a semi-automated 5-archetype editorial decision-support queue and deployed the complete research paper on GitHub Pages.
 
