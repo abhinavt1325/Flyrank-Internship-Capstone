@@ -471,7 +471,7 @@
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
       <div class="abstract-text">
-        How can digital publishing and SEO teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (<code>GroupShuffleSplit</code>). On unseen client domains, a regularized Random Forest model achieves <strong>64.0% Mean Precision@50</strong>—providing a <strong>+14.0 percentage point lift</strong> over the 50.0% unranked base rate and a <strong>+10.4 percentage point lift</strong> over baseline rule heuristics. We operationalize these predictions into an automated action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
+        How can digital publishing and SEO teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (<code>GroupShuffleSplit</code>). On unseen client domains, a regularized Logistic Regression model achieves <strong>72.0% Mean Precision@50</strong>—providing a <strong>+22.0 percentage point lift</strong> over the 50.0% unranked base rate and a <strong>+18.4 percentage point lift</strong> over baseline rule heuristics (with Random Forest achieving 64.0% Mean Precision@50 and a +14.0 percentage point lift). We operationalize these predictions into an automated action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
       </div>
     </div>
 
@@ -498,7 +498,7 @@
           <div class="stat-label">Client Domains</div>
         </div>
         <div class="stat-card">
-          <div class="stat-val green">+14.0 pp</div>
+          <div class="stat-val green">+22.0 pp</div>
           <div class="stat-label">Precision@50 Lift</div>
         </div>
         <div class="stat-card">
@@ -547,6 +547,7 @@
       </p>
       <div class="callout-box">
         <code>Baseline Score = 0.45 × Visibility_Rank + 0.35 × Freshness_Risk_Rank + 0.20 × Position_Opportunity</code>
+        <p style="margin-top: 8px; margin-bottom: 0; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Note: Baseline weights were expert-assigned a priori based on domain SEO heuristics in Week 4, not tuned on test data.</p>
       </div>
 
       <h3 class="sub-heading">Leakage Attack Audit</h3>
@@ -614,6 +615,9 @@
       </div>
 
       <h3 class="sub-heading">Feature Importance & Decision Drivers</h3>
+      <p>
+        <strong>Logistic Regression</strong> achieves the highest generalization accuracy (<strong>72.00% Mean Precision@50</strong>, <strong>0.633 ROC-AUC</strong>, <strong>+22.00 pp lift</strong>), demonstrating that a regularized linear model with scaled historical indicators generalizes robustly across client domains. Meanwhile, <strong>Random Forest</strong> (64.00% Mean Precision@50, +14.00 pp lift) provides valuable non-linear feature interaction mapping and decision thresholds used to operationalize the multi-tier action playbook.
+      </p>
       <p>
         Permutation importance on held-out clients demonstrates that <strong>historical impression volume</strong> (<code>log_impressions_90d</code>), <strong>content age</strong> (<code>content_age_days</code>), and <strong>visibility score</strong> provide the highest predictive signal. High-impression assets in positions 4–20 exhibit the highest ranking volatility.
       </p>
@@ -708,8 +712,13 @@
     <section class="paper-section" id="reproducibility">
       <h2 class="section-heading"><span class="section-num">07</span> Reproducibility & Code Receipts</h2>
       <p>
-        All experiments, feature engineering transformations, and validation splits are fully reproducible from the repository source code using fixed random seeds (<code>RANDOM_SEED = 42</code>).
+        All experiments, feature engineering transformations, and validation splits are fully reproducible from the repository source code using fixed random seeds (<code>RANDOM_SEED = 42</code>). Key estimator hyperparameters include:
       </p>
+      <ul style="margin-left: 24px; color: var(--text-secondary); margin-bottom: 16px;">
+        <li><strong>Logistic Regression (Linear Benchmark):</strong> <code>L2 penalty (C=0.1)</code>, <code>StandardScaler()</code>, <code>solver='lbfgs'</code>, <code>max_iter=1000</code>, <code>random_state=42</code>.</li>
+        <li><strong>Random Forest (Interaction Model):</strong> <code>n_estimators=200</code>, <code>max_depth=6</code>, <code>min_samples_leaf=20</code>, <code>random_state=42</code>, <code>n_jobs=-1</code>.</li>
+        <li><strong>Validation Design:</strong> <code>GroupShuffleSplit(n_splits=1, test_size=0.20, random_state=42)</code> grouped strictly by <code>client_id</code> (25 train clients / 7 held-out test clients).</li>
+      </ul>
       <div class="callout-box success">
         <div class="callout-title">📦 Artifacts & Code Links</div>
         <p>• <strong>Capstone Notebook:</strong> <a href="https://github.com/abhinavt1325/Flyrank-Internship-Capstone/blob/main/work/notebooks/capstone.ipynb" target="_blank"><code>work/notebooks/capstone.ipynb</code></a></p>

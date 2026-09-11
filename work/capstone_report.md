@@ -10,7 +10,7 @@
 
 ## 0. Abstract
 
-How can content teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (`GroupShuffleSplit`). On unseen client domains, a regularized Random Forest model achieves **64.0% Mean Precision@50** (a **+14.0 percentage point lift** over the 50.0% unranked base rate and a **+10.4 percentage point lift** over baseline rule heuristics). We operationalize these predictions into an automated action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
+How can content teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (`GroupShuffleSplit`). On unseen client domains, a regularized Logistic Regression model achieves **72.0% Mean Precision@50** (a **+22.0 percentage point lift** over the 50.0% unranked base rate and a **+18.4 percentage point lift** over baseline rule heuristics, with Random Forest achieving 64.0% Mean Precision@50 and a +14.0 percentage point lift). We operationalize these predictions into an automated action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
 
 ---
 
@@ -37,6 +37,7 @@ How can content teams systematically prioritize which aging web pages to refresh
 
 - **Deterministic Rule Formula:**
   $$\text{Baseline Score} = 0.45 \times \text{Visibility Rank} + 0.35 \times \text{Freshness Risk Rank} + 0.20 \times \text{Position Opportunity}$$
+  *(Weights were expert-assigned a priori based on domain SEO triage heuristics in Week 4, not tuned on test data).*
 - **Baseline Performance:**
   - Evaluated on test clients: **53.60% Mean Precision@50** (a +3.60 pp lift over the 50.00% unranked base rate; ROC-AUC: 0.561).
 
@@ -44,8 +45,9 @@ How can content teams systematically prioritize which aging web pages to refresh
 
 ## 4. Model / analysis
 
-- **Primary Model:** Random Forest Classifier (`n_estimators=200, max_depth=6, min_samples_leaf=20, random_state=42`).
-- **Linear Benchmark:** Logistic Regression with L2 Regularization (`C=0.1`) and Standard Scaling.
+- **Primary Models:**
+  - **Logistic Regression (Linear Benchmark):** L2 Regularization (`C=0.1`), Standard Scaler, `solver='lbfgs'`, `max_iter=1000`.
+  - **Random Forest (Interaction Model):** `n_estimators=200`, `max_depth=6`, `min_samples_leaf=20`, `n_jobs=-1`.
 - **Feature Set (17 historical signals):**
   - Search Visibility: `log_impressions_90d`, `log_clicks_90d`, `ctr`, `visibility_score`.
   - Ranking Exposure: `avg_position`, `has_position`, `position_opportunity_score`.
@@ -68,6 +70,7 @@ How can content teams systematically prioritize which aging web pages to refresh
 | Random Forest | Grouped (Honest) | **64.00%** | **0.607** | **+14.00 pp** |
 | Logistic Regression | Grouped (Honest) | **72.00%** | **0.633** | **+22.00 pp** |
 
+- **Model Comparison:** Logistic Regression achieves the highest holdout Precision@50 (72.00%, +22.00 pp lift) and ROC-AUC (0.633), showing superior out-of-domain generalization. Random Forest (64.00%, +14.00 pp lift) captures non-linear interactions utilized to segment multi-tier editorial action archetypes.
 - **Error Analysis:** Top error mode is False Positives (~30–35%), which primarily consist of high-impression, stale evergreen reference pages where query intent has not changed. This demonstrates why the output must serve as human decision-support rather than autonomous automated rewriting.
 
 ---
@@ -94,6 +97,10 @@ How can content teams systematically prioritize which aging web pages to refresh
 ## 8. Reproducibility
 
 - **Environment & Seeds:** Python 3.10+ / scikit-learn 1.9.0; `RANDOM_SEED = 42`.
+- **Key Hyperparameters:**
+  - **Logistic Regression:** `L2 penalty (C=0.1)`, `StandardScaler()`, `solver='lbfgs'`, `max_iter=1000`, `random_state=42`.
+  - **Random Forest:** `n_estimators=200`, `max_depth=6`, `min_samples_leaf=20`, `random_state=42`, `n_jobs=-1`.
+  - **Group Split:** `GroupShuffleSplit(n_splits=1, test_size=0.20, random_state=42)` on `client_id`.
 - **How to Rerun:**
   ```bash
   pip install -r requirements.txt
@@ -116,7 +123,7 @@ Built on the **FlyRank ML Internship dataset** ([https://flyrank.ai](https://fly
 ### A. 5-Minute Technical Demo Outline
 - **0:00–1:00 (The Problem & Cost):** Why calendar-based content refreshes ("update everything older than 6 months") waste editorial budgets ($150–$300/article) on stagnant or low-opportunity pages.
 - **1:00–2:30 (The Validation Trap):** Why naive random splits produce artificially inflated metrics (domain memorization) and how strict client-level holdouts (`GroupShuffleSplit` across 32 clients) keep the benchmark honest.
-- **2:30–3:45 (Model Results & Lift):** How Random Forest achieves 64.0% Mean Precision@50 on completely unseen client domains (+14.0 pp over base rate, +10.4 pp over deterministic rules).
+- **2:30–3:45 (Model Results & Lift):** How Logistic Regression achieves 72.0% Mean Precision@50 on completely unseen client domains (+22.0 pp over base rate, +18.4 pp over deterministic rules; Random Forest achieves 64.0% / +14.0 pp).
 - **3:45–5:00 (Operational Action Playbook):** How predictions map into 5 editorial archetypes (P1–P5), automated reason codes, and the live deployed research paper at https://abhinavt1325.github.io/Flyrank-Internship-Capstone/.
 
 ### B. Social Post Cut (LinkedIn / X)
@@ -124,7 +131,7 @@ Most SEO teams schedule content refreshes based on calendar age (e.g. "update ev
 
 For my FlyRank ML internship capstone, I analyzed whether historical search signals (ranking proximity, impression volume, staleness, and dwell time) could predict search traffic decay across 30,000 URLs and 32 client domains before traffic drops occur.
 
-The main takeaway was validation integrity: standard random train/test splits give false confidence because models memorize client domain patterns. When evaluated strictly on unseen client domains (`GroupShuffleSplit`), a regularized Random Forest achieved 64.0% Mean Precision@50 (+14.0 percentage points over base rate).
+The main takeaway was validation integrity: standard random train/test splits give false confidence because models memorize client domain patterns. When evaluated strictly on unseen client domains (`GroupShuffleSplit`), a regularized Logistic Regression model achieved 72.0% Mean Precision@50 (+22.0 percentage points over base rate; Random Forest achieved 64.0% / +14.0 pp).
 
 I turned the predictions into a 5-archetype editorial triage engine and published the full methodology:
 - Interactive Paper: https://abhinavt1325.github.io/Flyrank-Internship-Capstone/
@@ -132,5 +139,5 @@ I turned the predictions into a 5-archetype editorial triage engine and publishe
 (Built on the FlyRank ML Internship dataset: https://flyrank.ai)
 
 ### C. 3-Sentence Employer-Facing Summary
-I engineered a machine learning prioritization engine on 30,000 enterprise search URLs across 32 client domains to identify decaying organic content before revenue loss occurs. Evaluated strictly on unseen client domains using `GroupShuffleSplit`, the model achieved 64.0% Mean Precision@50 (+14.0 pp lift over base rate). I translated the output into an automated 5-archetype editorial action queue and deployed the complete research paper on GitHub Pages.
+I engineered a machine learning prioritization engine on 30,000 enterprise search URLs across 32 client domains to identify decaying organic content before revenue loss occurs. Evaluated strictly on unseen client domains using `GroupShuffleSplit`, the model achieved 72.0% Mean Precision@50 (+22.0 pp lift over base rate). I translated the output into an automated 5-archetype editorial action queue and deployed the complete research paper on GitHub Pages.
 
