@@ -471,7 +471,7 @@
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
       <div class="abstract-text">
-        How can digital publishing and SEO teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (<code>GroupShuffleSplit</code>). On unseen client domains, a regularized Logistic Regression model achieves <strong>72.0% Mean Precision@50</strong>—providing a <strong>+22.0 percentage point lift</strong> over the 50.0% unranked base rate and a <strong>+18.4 percentage point lift</strong> over baseline rule heuristics (with Random Forest achieving 64.0% Mean Precision@50 and a +14.0 percentage point lift). We operationalize these predictions into an automated action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
+        How can digital publishing and SEO teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (<code>GroupShuffleSplit</code>). On unseen client domains, a regularized Logistic Regression model achieves <strong>72.0% Mean Precision@50</strong>—providing a <strong>+22.0 percentage point lift</strong> over the 50.0% unranked base rate and a <strong>+18.4 percentage point lift</strong> over baseline rule heuristics (with Random Forest achieving 64.0% Mean Precision@50 and a +14.0 percentage point lift). We operationalize these predictions into a semi-automated decision-support action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
       </div>
     </div>
 
@@ -520,12 +520,15 @@
       </p>
       <h3 class="sub-heading">Feature Vector Specification</h3>
       <p>
-        We construct a 17-dimensional historical feature vector capturing three primary signal axes:
+        We construct a 17-dimensional historical feature vector capturing six distinct signal groups (all strictly knowable at decision time):
       </p>
       <ul style="margin-left: 24px; color: var(--text-secondary); margin-bottom: 16px;">
-        <li><strong>Search Visibility:</strong> <code>log_impressions_90d</code>, <code>log_clicks_90d</code>, <code>ctr</code>, and historical ranking percentile.</li>
-        <li><strong>Rank Exposure:</strong> <code>avg_position</code> (with <code>has_position</code> indicator handling position zero), position opportunity score.</li>
-        <li><strong>Content Age & Engagement:</strong> <code>days_since_last_update</code>, <code>content_age_days</code>, <code>engagement_rate</code>, <code>scroll_rate</code>, and <code>word_count</code> with missingness flags.</li>
+        <li><strong>Search Visibility & Historical Demand (4 signals):</strong> <code>log_impressions_90d</code>, <code>log_clicks_90d</code>, <code>ctr</code>, and <code>visibility_score</code> (historical impression percentile rank).</li>
+        <li><strong>Ranking Exposure & Leverage (3 signals):</strong> <code>avg_position</code> (median-imputed for unranked items), <code>has_position</code> (binary indicator for position &gt; 0), and <code>position_opportunity_score</code> (striking-distance leverage score).</li>
+        <li><strong>Content Age & Staleness Risk (3 signals):</strong> <code>days_since_last_update</code>, <code>content_age_days</code>, and <code>freshness_risk_score</code> (staleness percentile rank).</li>
+        <li><strong>Dwell Engagement & Missingness (3 signals):</strong> <code>engagement_rate</code>, <code>scroll_rate</code> (0-filled), and <code>has_scroll</code> (binary missingness indicator).</li>
+        <li><strong>Content Structure & Length (2 signals):</strong> <code>word_count</code> (median-imputed) and <code>has_word_count</code> (binary missingness indicator).</li>
+        <li><strong>Categorical Content Types (2 signals):</strong> One-hot encoded dummy indicators for <code>content_type</code> with the first category dropped (<code>ct_keyword_article</code>, <code>ct_landing_page</code>).</li>
       </ul>
     </section>
 
@@ -560,7 +563,7 @@
     <section class="paper-section" id="results">
       <h2 class="section-heading"><span class="section-num">04</span> Results & Baseline Comparison</h2>
       <p>
-        Models are evaluated on held-out test clients using <strong>Mean Precision@50</strong> across per-client queues (the fraction of the top-50 prioritized URLs per client that are truly declining in search performance).
+        Models are evaluated on held-out test clients using <strong>Mean Precision@50</strong> across per-client queues (the fraction of the top-50 prioritized URLs per client that are truly declining in search performance). We choose Mean Precision@50 as the primary evaluation metric because editorial teams operate under finite weekly bandwidth (typically triaging batches of ~50 URLs per client domain); evaluating ranking precision at this operational queue depth directly measures decision-support efficacy and editorial ROI.
       </p>
 
       <div class="table-wrapper">
@@ -614,12 +617,12 @@
         </div>
       </div>
 
-      <h3 class="sub-heading">Feature Importance & Decision Drivers</h3>
+      <h3 class="sub-heading">Model Comparison & Decision Drivers</h3>
       <p>
-        <strong>Logistic Regression</strong> achieves the highest generalization accuracy (<strong>72.00% Mean Precision@50</strong>, <strong>0.633 ROC-AUC</strong>, <strong>+22.00 pp lift</strong>), demonstrating that a regularized linear model with scaled historical indicators generalizes robustly across client domains. Meanwhile, <strong>Random Forest</strong> (64.00% Mean Precision@50, +14.00 pp lift) provides valuable non-linear feature interaction mapping and decision thresholds used to operationalize the multi-tier action playbook.
+        In this specific experiment, <strong>Logistic Regression</strong> achieved the highest generalization ranking performance (<strong>72.00% Mean Precision@50</strong>, <strong>0.633 ROC-AUC</strong>, <strong>+22.00 pp lift</strong> vs. Base Rate 50.00%, Baseline Rule 53.60%, and Random Forest 64.00%). In this evaluation regime, the regularized linear model (L2 penalty <code>C=0.1</code> with standard scaling) proved less sensitive to domain-specific feature variance across held-out client partitions than tree-based partitioning. This observation reflects empirical performance on this cross-sectional dataset and feature set rather than a universal claim that linear models inherently outperform tree ensembles. Meanwhile, <strong>Random Forest</strong> (64.00% Mean Precision@50, +14.00 pp lift) was utilized to examine non-linear feature interaction importances and establish risk thresholds for operational routing.
       </p>
       <p>
-        Permutation importance on held-out clients demonstrates that <strong>historical impression volume</strong> (<code>log_impressions_90d</code>), <strong>content age</strong> (<code>content_age_days</code>), and <strong>visibility score</strong> provide the highest predictive signal. High-impression assets in positions 4–20 exhibit the highest ranking volatility.
+        Permutation importance on held-out clients indicates that <strong>historical impression volume</strong> (<code>log_impressions_90d</code>), <strong>content age</strong> (<code>content_age_days</code>), and <strong>visibility score</strong> are strongly associated with traffic decline risk. High-impression assets in positions 4–20 exhibit the highest ranking volatility.
       </p>
     </section>
 
@@ -643,7 +646,7 @@
     <section class="paper-section" id="playbook">
       <h2 class="section-heading"><span class="section-num">06</span> Ranked Content Action Playbook</h2>
       <p>
-        To translate model risk probabilities into editorial workflows, we segment all URLs into five operational archetypes with standardized reason codes:
+        To translate model risk probabilities into editorial workflows, we segment all URLs into five operational archetypes with standardized reason codes. This playbook functions strictly as a <strong>semi-automated decision-support queue</strong>; human verification by editorial staff is mandatory before making content updates or structural changes:
       </p>
 
       <div class="archetype-list">

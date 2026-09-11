@@ -10,7 +10,7 @@
 
 ## 0. Abstract
 
-How can content teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (`GroupShuffleSplit`). On unseen client domains, a regularized Logistic Regression model achieves **72.0% Mean Precision@50** (a **+22.0 percentage point lift** over the 50.0% unranked base rate and a **+18.4 percentage point lift** over baseline rule heuristics, with Random Forest achieving 64.0% Mean Precision@50 and a +14.0 percentage point lift). We operationalize these predictions into an automated action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
+How can content teams systematically prioritize which aging web pages to refresh before search traffic decay causes substantial revenue loss? We analyze an enterprise portfolio of 30,000 pseudonymized content items across 32 client domains, capturing 90-day search visibility and user dwell engagement signals. We formulate content refresh triage as a machine learning ranking problem and evaluate predictive models against a deterministic heuristic baseline under an honest client-holdout split (`GroupShuffleSplit`). On unseen client domains, a regularized Logistic Regression model achieves **72.0% Mean Precision@50** (a **+22.0 percentage point lift** over the 50.0% unranked base rate and a **+18.4 percentage point lift** over baseline rule heuristics, with Random Forest achieving 64.0% Mean Precision@50 and a +14.0 percentage point lift). We operationalize these predictions into a semi-automated decision-support action playbook featuring 5 content archetypes, reason codes, and human-in-the-loop verification protocols to support high-ROI editorial resource allocation.
 
 ---
 
@@ -48,12 +48,13 @@ How can content teams systematically prioritize which aging web pages to refresh
 - **Primary Models:**
   - **Logistic Regression (Linear Benchmark):** L2 Regularization (`C=0.1`), Standard Scaler, `solver='lbfgs'`, `max_iter=1000`.
   - **Random Forest (Interaction Model):** `n_estimators=200`, `max_depth=6`, `min_samples_leaf=20`, `n_jobs=-1`.
-- **Feature Set (17 historical signals):**
-  - Search Visibility: `log_impressions_90d`, `log_clicks_90d`, `ctr`, `visibility_score`.
-  - Ranking Exposure: `avg_position`, `has_position`, `position_opportunity_score`.
-  - Staleness & Age: `days_since_last_update`, `content_age_days`, `freshness_risk_score`.
-  - Engagement: `engagement_rate`, `scroll_rate`, `has_scroll`.
-  - Structure: `word_count`, `has_word_count`, one-hot `content_type`.
+- **Feature Set (17 strictly historical signals):**
+  - Search Visibility & Demand (4 signals): `log_impressions_90d`, `log_clicks_90d`, `ctr`, `visibility_score`.
+  - Ranking Exposure & Leverage (3 signals): `avg_position`, `has_position`, `position_opportunity_score`.
+  - Staleness & Age (3 signals): `days_since_last_update`, `content_age_days`, `freshness_risk_score`.
+  - Dwell Engagement & Missingness (3 signals): `engagement_rate`, `scroll_rate`, `has_scroll`.
+  - Content Structure & Length (2 signals): `word_count`, `has_word_count`.
+  - Content Type Categoricals (2 signals): One-hot encoded dummies (`ct_keyword_article`, `ct_landing_page`).
 - **Target Definition:** `is_declining_label = (trend_direction == 'down')`.
 
 ---
@@ -61,6 +62,7 @@ How can content teams systematically prioritize which aging web pages to refresh
 ## 5. Evaluation
 
 - **Validation Design:** `GroupShuffleSplit(n_splits=1, test_size=0.20, random_state=42)` grouped strictly on `client_id`. Train: 25 clients (23,837 URLs); Test: 7 clients (6,163 URLs). Zero shared client domains.
+- **Metric Rationale:** Mean Precision@50 is selected because editorial teams operate under bounded weekly review capacity (triaging roughly 50 URLs per client); evaluating precision at top-50 queue depth directly reflects decision-support ROI.
 - **Results Table (Same Test Clients):**
 
 | Model | Split Type | Precision@50 | ROC-AUC | Lift vs Base Rate |
@@ -70,27 +72,27 @@ How can content teams systematically prioritize which aging web pages to refresh
 | Random Forest | Grouped (Honest) | **64.00%** | **0.607** | **+14.00 pp** |
 | Logistic Regression | Grouped (Honest) | **72.00%** | **0.633** | **+22.00 pp** |
 
-- **Model Comparison:** Logistic Regression achieves the highest holdout Precision@50 (72.00%, +22.00 pp lift) and ROC-AUC (0.633), showing superior out-of-domain generalization. Random Forest (64.00%, +14.00 pp lift) captures non-linear interactions utilized to segment multi-tier editorial action archetypes.
-- **Error Analysis:** Top error mode is False Positives (~30–35%), which primarily consist of high-impression, stale evergreen reference pages where query intent has not changed. This demonstrates why the output must serve as human decision-support rather than autonomous automated rewriting.
+- **Model Comparison:** In this specific experiment, Logistic Regression achieved the highest generalization ranking performance (72.00% Mean Precision@50, 0.633 ROC-AUC, +22.00 pp lift). The regularized linear model with standard scaling showed less sensitivity to domain-specific feature variance across unseen client partitions than tree partitioning on this dataset (this is an empirical finding for this specific dataset and feature set, not a universal theoretical claim). Random Forest (64.00%, +14.00 pp lift) captured non-linear interactions utilized to segment multi-tier editorial action archetypes.
+- **Error Analysis:** Top error mode is False Positives (~30–35%), which primarily consist of high-impression, stale evergreen reference pages where query intent has not changed. This indicates why the output must serve as human decision-support rather than autonomous automated rewriting.
 
 ---
 
 ## 6. Interpretation
 
-- **Key Feature Drivers:** Permutation importance shows that `log_impressions_90d`, `content_age_days`, and `visibility_score` dominate predictive capability.
+- **Key Feature Drivers:** Permutation importance indicates that `log_impressions_90d`, `content_age_days`, and `visibility_score` are strongly associated with decay risk.
 - **Business Insight:** High-volume URLs in striking-distance rankings (positions 4–20) exhibit the steepest risk-reward profile: they suffer the highest traffic loss when decaying, but offer the highest ROI when refreshed.
 
 ---
 
 ## 7. Recommendation
 
-- **Operational Content Archetypes:**
+- **Operational Content Archetypes (Semi-Automated Decision Support):**
   1. `P1: Striking-Distance Refresh` (`striking_distance_decay_risk`) — Deep factual and structural refresh.
   2. `P2: Page-1 Defense` (`page_one_prominence_defense`) — SERP feature defense & schema updates.
   3. `P3: CTR Metadata Optimization` (`low_ctr_high_visibility`) — Title and meta description rewrite.
   4. `P4: Evergreen Reference` (`evergreen_stable_monitor`) — Passive monitoring; avoid date bumping.
   5. `P5: Thin Consolidation` (`low_volume_consolidation`) — Audit for 301 redirect or prune.
-- **The No-Go List:** No autonomous AI rewrites pushed directly to production; no synthetic date bumping without substantive edits; no automated URL deletions.
+- **The No-Go List:** No autonomous AI rewrites pushed directly to production; no synthetic date bumping without substantive edits; no automated URL deletions. Human editorial review is mandatory.
 
 ---
 
